@@ -201,7 +201,7 @@ class IncomingServiceAttributes:
                 "error": f"No data found - Error occured - {str(e)}"
             }
     
-    async def fetch_relation(self,session, id, relationName):
+    async def fetch_relation(self,session, id, relationName="", direction="OUTGOING"):
         url = f"{self.config['BASE_URL_QUERY']}/v1/entities/{id}/relations"
         headers = {"Content-Type": "application/json"}  
         payload = {
@@ -211,11 +211,12 @@ class IncomingServiceAttributes:
             "id": "",
             "name": relationName,
             "activeAt": "",
-            "direction": "OUTGOING",
+            "direction": direction,
         }
         async with session.post(url, json=payload, headers=headers) as response:
             response.raise_for_status()
             data = await response.json()
+            print(data)
             return data
     
     async def get_node_data_by_id(self,entityId, session):
@@ -235,8 +236,8 @@ class IncomingServiceAttributes:
         except Exception as e:
             return {"error": f"Failed to fetch entity data by id {entityId}: {str(e)}"}     
 
-    async def find_parent_department(self, session, entity_id):
-        url = f"{self.config['BASE_URL_QUERY']}/v1/entities/{entity_id}/relations"
+    async def findParentDepartmentOrMinistry(self, parentCategoryId):
+        url = f"{self.config['BASE_URL_QUERY']}/v1/entities/{parentCategoryId}/relations"
         headers = {"Content-Type": "application/json"}
         payload = {
             "relatedEntityId": "",
@@ -248,30 +249,19 @@ class IncomingServiceAttributes:
             "direction": "INCOMING"
         }
 
-        async with session.post(url, json=payload, headers=headers) as response:
-            response.raise_for_status()
-            relations = await response.json()
-
-        if relations:
-            for rel in relations:
-                related_id = rel.get("relatedEntityId")
-                if related_id:
-                    parent_entity = await self.get_node_data_by_id(related_id, session)
-                    if parent_entity:
-                        kind_minor = parent_entity.get("kind", {}).get("minor")
-                        if kind_minor == "department" or kind_minor == "minister":
-                            return parent_entity
-                        else:
-                            return await self.find_parent_department(session, related_id)
-        else:
-            parent_entity = await self.get_node_data_by_id(entity_id, session)
-            if parent_entity:
-                kind_minor = parent_entity.get("kind", {}).get("minor")
-                if kind_minor == "department" or kind_minor == "minister":
-                    return parent_entity
+        async with aiohttp.ClientSession(headers=headers) as session:
+            async with session.post(url, json=payload, headers=headers) as response:
+                response.raise_for_status()
+                relations = await response.json()
                 
-
-        return None
+                if relations:
+                    relatedId = relations[0].get("relatedEntityId")
+                    parentEntity = await self.get_node_data_by_id(relatedId, session=session)
+                    if parentEntity:
+                        minorKind = parentEntity.get("kind",{}).get("minor")
+                        if minorKind == "department" or minorKind == "minister":
+                            parentEntity["name"] = self.decode_protobuf_attribute_name(parentEntity["name"])
+                            return parentEntity
       
     async def get_metadata_for_entity(self, session, entityId):
         
@@ -289,6 +279,29 @@ class IncomingServiceAttributes:
         except Exception as e:
             return f"failed to get metadata for {entityId} : {e}" 
         
+    async def process_entity(self, item, id, metadataParent):
+        kind = item.get("kind", {}).get("major", "")
+        name = item.get("name")
+                           
+        name = self.decode_protobuf_attribute_name(name)
+
+        item["name"] = name
+        item["nameExact"] = None
+        item["parentId"] = id
+
+        if kind == "Dataset":
+            created_date = item.get("created")
+            if created_date:
+                year = created_date.split("-")[0]
+            else:
+                year = "unknown"
+            if(metadataParent):
+                item["nameExact"]= self.decode_protobuf_attribute_name(metadataParent[item["name"]])                 
+            return ("Dataset",year,item)
+                            
+        if kind == "Category":            
+            return ("Category",None,item)
+                                   
     async def expose_category_by_id(self, id: str | None):
 
         global_start_time = time.perf_counter()
@@ -297,90 +310,65 @@ class IncomingServiceAttributes:
         finalOutput = { "categories": [], "datasets": defaultdict(list) }
         
         try:
-            if id is None:
-                searchList = []
-                url = f"{self.config['BASE_URL_QUERY']}/v1/entities/search"
-                payload_dataset = {
-                    "kind": {
-                        "major": "Category",
-                        "minor": "parentCategory"
+            async with aiohttp.ClientSession(headers=headers) as session:
+                
+                if id is None:
+                    searchList = []
+                    url = f"{self.config['BASE_URL_QUERY']}/v1/entities/search"
+                    payload_dataset = {
+                        "kind": {
+                            "major": "Category",
+                            "minor": "parentCategory"
+                        }
                     }
-                }
 
-                async with aiohttp.ClientSession() as session:
                     async with session.post(url, json=payload_dataset, headers=headers) as response:
                         response.raise_for_status()
                         res_json = await response.json()
                         response_list = res_json.get("body",[])
-                        
+                          
                         for item in response_list:
                             item["nameExact"] = None
                             item["name"] = self.decode_protobuf_attribute_name(item["name"])
-                        
-                        finalOutput["categories"] = response_list        
                             
-            else:       
-                async with aiohttp.ClientSession() as session:
-                    tasks_for_relations = [
-                        self.fetch_relation(session, id, relationName)
-                        for relationName in ["IS_ATTRIBUTE","AS_CATEGORY"]
-                    ]
-                    results = await asyncio.gather(*tasks_for_relations, return_exceptions=True)
-
+                        finalOutput["categories"] = response_list        
+                                
+                else:
+                    results = await asyncio.gather(self.fetch_relation(session, id), return_exceptions=True)
+                          
                     searchList = [
                         item
                         for sublist in results
                         if isinstance(sublist, list)
-                        for item in sublist
+                        for item in sublist 
+                        if getattr(item, "name", None) 
                     ]
-                          
-                async with aiohttp.ClientSession() as session:
+                    
+                    return searchList
+                         
                     tasks_for_entity_data = [
                         self.get_node_data_by_id(item['relatedEntityId'],session)
                         for item in searchList
                     ]
                     results = await asyncio.gather(*tasks_for_entity_data, return_exceptions=True)
+                     
+                    metadataFromParent = await self.get_metadata_for_entity(session, id)
                     
-                    parent_department = await self.find_parent_department(session, id) 
+                    tasks_for_final = [
+                        self.process_entity(item, id, metadataFromParent) 
+                        for item in results if isinstance(item, dict)
+                    ]
                     
-                    print(f'parent department {parent_department}')
+                    processed = await asyncio.gather(*tasks_for_final, return_exceptions=True)
                     
-                    for item in results:
-                        kind = item.get("kind", {}).get("major", "")
-                        name = item.get("name")
-                        
-                        name = self.decode_protobuf_attribute_name(name)
-
-                        item["name"] = name
-                        item["nameExact"] = None
-                        item["parentId"] = id
-                        item["source"] = ""
-
-                        if kind == "Dataset":
-                            created_date = item.get("created")
-                            if created_date:
-                                year = created_date.split("-")[0]
-                            else:
-                                year = "unknown"
-                            finalOutput["datasets"][year].append(item)
-                            async with aiohttp.ClientSession() as session:
-                                metadata_parent = await self.get_metadata_for_entity(session, id)
-                                if(metadata_parent):
-                                    item["nameExact"]= self.decode_protobuf_attribute_name(metadata_parent[item["name"]]) 
-                                if(parent_department):
-                                    source = self.decode_protobuf_attribute_name(parent_department["name"])
-                                    item["source"] = source
-                                    item["sourceId"] = parent_department["id"]
-                                    item["sourceType"] = parent_department["kind"].get("minor")
-                        
+                    for result in processed:
+                        if not result:
+                            continue
+                        kind, year, item = result
                         if kind == "Category":
-                            if(parent_department):
-                                source = self.decode_protobuf_attribute_name(parent_department["name"])
-                                item["source"] = source
-                                item["sourceId"] = parent_department["id"]
-                                item["sourceType"] = parent_department["kind"].get("minor")
-                                
                             finalOutput["categories"].append(item)
+                        elif kind == "Dataset":
+                            finalOutput["datasets"][year].append(item)
                  
         except Exception as e:
             return {"error": f"Failed to fetch categories or attributes {id}: {str(e)}"}
@@ -389,76 +377,5 @@ class IncomingServiceAttributes:
         global_elapsed_time = global_end_time - global_start_time
         print(f"\n Total time taken: {global_elapsed_time:.4f} seconds")
         return finalOutput   
-        
-    async def datacategoriesbyyear(self, name: str | None, parentId: str):
-        global_start_time = time.perf_counter()
-        finalOutput = {"datasets": defaultdict(list)}
-
-        try:
-            if not name:
-                return finalOutput
-
-            async with aiohttp.ClientSession() as session:
-                # Step 1: Fetch relations
-                relation_results = await asyncio.gather(
-                    self.fetch_relation(session, parentId, "IS_ATTRIBUTE"),
-                    return_exceptions=True
-                )
-
-                searchList = [
-                    item
-                    for sublist in relation_results
-                    if isinstance(sublist, list)
-                    for item in sublist
-                ]
-
-                # Step 2: Get node data by ID
-                node_data_results = await asyncio.gather(
-                    *[self.get_node_data_by_id(item['relatedEntityId'], session) for item in searchList],
-                    return_exceptions=True
-                )
-
-                # Step 3: Get parent department
-                parent_department = await self.find_parent_department(session, parentId)
-
-                # Step 4: Get metadata once
-                metadata_parent = await self.get_metadata_for_entity(session, parentId)
-
-                for item in node_data_results:
-                    if isinstance(item, Exception):
-                        continue
-
-                    kind = item.get("kind", {}).get("major", "")
-                    raw_name = item.get("name")
-                    decoded_name = self.decode_protobuf_attribute_name(raw_name)
-                    
-                    if decoded_name != name:
-                        continue
-
-                    # Set base fields
-                    item["name"] = decoded_name
-                    item["nameExact"] = None
-                    item["parentId"] = parentId
-                    item["source"] = ""
-
-                    if kind == "Dataset":
-                        created_date = item.get("created")
-                        year = created_date.split("-")[0] if created_date else "unknown"
-                        finalOutput["datasets"][year].append(item)
-
-                        # Handle metadata_parent mapping
-                        if metadata_parent and decoded_name in metadata_parent:
-                            item["nameExact"] = self.decode_protobuf_attribute_name(metadata_parent[decoded_name])
-
-                        # Set source from parent department
-                        if parent_department:
-                            item["source"] = self.decode_protobuf_attribute_name(parent_department.get("name", ""))
-
-        except Exception as e:
-            return {"error": f"Failed to fetch categories or attributes for parentId {parentId}: {str(e)}"}
-
-        global_end_time = time.perf_counter()
-        print(f"\nTotal time taken: {global_end_time - global_start_time:.4f} seconds")
-        return finalOutput
                
     

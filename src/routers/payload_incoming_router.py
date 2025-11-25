@@ -55,10 +55,10 @@ async def write_metadata(writer: WriteAttributes = Depends(get_writer_service)):
     
     return writer.create_parent_categories_and_children_categories_v2(result)
 
-@router.get("/data/yearswithdata")
-async def yearswithdata(name: str, parentId: str, statService: IncomingServiceAttributes = Depends(get_stat_service)):
-    years = await statService.datacategoriesbyyear(name, parentId)
-    return years
+@router.get("/data/find-root")
+async def findParentDepartmentOrMinistry(categoryId: str, statService: IncomingServiceAttributes = Depends(get_stat_service)):
+    root = await statService.findParentDepartmentOrMinistry(categoryId)
+    return root
 
 # Get the timeline for the orgchart
 # @router.get("/data/orgchart/timeline")
