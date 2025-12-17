@@ -115,10 +115,13 @@ paths:
                     required:
                     - name
                     - id
+                    - term
                     properties:
                       name:
                         type: string
                       id:
+                        type: string
+                      term:
                         type: string
         "400":
           description: Bad request

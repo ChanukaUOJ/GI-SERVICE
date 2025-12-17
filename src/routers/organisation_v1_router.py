@@ -36,3 +36,11 @@ async def persons_by_portfolio(
 ):
     service_response = await service.persons_by_portfolio(portfolio_id=portfolio_id, president_id=body.president_id, selected_date=body.activeDate.date)
     return service_response
+
+@router.post('/prime-minister')
+async def prime_minister(
+    active_date: Date = Body(...),
+    service: OrganisationService = Depends(get_organisation_service)
+):
+    service_response = await service.prime_minister(selected_date=active_date.date)
+    return service_response
