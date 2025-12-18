@@ -188,6 +188,7 @@ class OrganisationService:
             "portfolioList" : activePortfolioList,
         }
 
+<<<<<<< HEAD
         return finalResult
     
     # helper: enrich department
@@ -347,3 +348,6 @@ class OrganisationService:
                 "statusCode": 500,
                 "message": str(e)
             }
+=======
+        return finalResult
+>>>>>>> e4e8c9f (Closes: #27: Active portfolio list API implementation (#28))
