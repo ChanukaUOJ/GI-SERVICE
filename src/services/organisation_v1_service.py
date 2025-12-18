@@ -1,4 +1,5 @@
 import asyncio
+from fastapi import HTTPException
 from src.utils.util_functions import decode_protobuf_attribute_name,normalize_timestamp
 from aiohttp import ClientSession
 from src.utils import http_client
@@ -191,15 +192,14 @@ class OrganisationService:
     
     # helper: enrich department
     async def enrich_department_item(self, department_relation, selected_date):
-        try:
-
+            
             department_id = department_relation.get("relatedEntityId")
 
             department_data_task = self.opengin_service.get_entity_by_id(entityId=department_id)
             dataset_task = self.opengin_service.fetch_relation(entityId=department_id, relationName="AS_CATEGORY")
 
             # run parallel calls to get department data and parent category relations to ensure the department has data
-            department_data, dataset_relations = await asyncio.gather(department_data_task, dataset_task, return_exceptions=True)
+            department_data, dataset_relations = await asyncio.gather(department_data_task, dataset_task)
 
             # decode name
             name = decode_protobuf_attribute_name(department_data.get("name", "Unknown"))
@@ -219,8 +219,6 @@ class OrganisationService:
             }
 
             return final_result
-        except Exception as e:
-            return e
 
     # API: departments by portfolio
     async def departments_by_portfolio(self, portfolio_id, selected_date):
@@ -241,6 +239,7 @@ class OrganisationService:
                 "isNew": false,
                 "hasData": false
                 },
+            ]
         }
         """
 
@@ -268,15 +267,11 @@ class OrganisationService:
 
             # final results to return
             finalResult = {
-                "totalDepartments": len(results),
+                "totalDepartments": len(departments),
                 "newDepartments": new_departments,
-                "departmentList" : results,
+                "departmentList" : departments,
             }
 
             return finalResult
         except Exception as e:
-            return {
-                "body": "",
-                "statusCode": 500,
-                "message": str(e)
-            }
+            raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {e}")
