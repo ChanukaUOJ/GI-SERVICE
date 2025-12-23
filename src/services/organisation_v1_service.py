@@ -188,7 +188,6 @@ class OrganisationService:
             "portfolioList" : activePortfolioList,
         }
 
-<<<<<<< HEAD
         return finalResult
     
     # helper: enrich department
@@ -349,5 +348,4 @@ class OrganisationService:
                 "message": str(e)
             }
 =======
-        return finalResult
->>>>>>> e4e8c9f (Closes: #27: Active portfolio list API implementation (#28))
+>>>>>>> ce8fb7a (fixed confict)
