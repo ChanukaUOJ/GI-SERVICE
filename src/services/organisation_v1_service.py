@@ -347,5 +347,5 @@ class OrganisationService:
                 "statusCode": 500,
                 "message": str(e)
             }
-=======
->>>>>>> ce8fb7a (fixed confict)
+
+

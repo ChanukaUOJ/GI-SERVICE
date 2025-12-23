@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query, Body, Path
 from src.services.organisation_v1_service import OrganisationService
 from src.dependencies import get_config
 from src.models.organisation_v1_schemas import Date, PersonsByPortfolioRquest
-from src.services.core_opengin_service import OpenGINService
+from src.services import OpenGINService, OrganisationService
 
 router = APIRouter(prefix="/v1/organisation", tags=["Organisation"])
 
