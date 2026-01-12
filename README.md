@@ -1,25 +1,87 @@
-# GI-SERVICE
+## GI-Service
 
-**General Information Service** - API Adapter for OpenGIN (Open General Information Network)
+**A Backend-for-Frontend (BFF)** API that serves optimized data to the OpenGINXplore frontend.
 
-A FastAPI-based service that provides data processing and API endpoints for government information management, including entity attributes, organizational charts, and data visualization capabilities.
+This service acts as a Backend-for-Frontend (BFF) for the OpenGINXplore web application.
+It fetches data from the OpenGIN backend, aggregates and transforms it, and exposes
+frontend-friendly REST APIs to improve performance and reduce complexity on the client side.
 
-## 🚀 Features
+### High Level Overview
+```mermaid
+     flowchart LR
+         N1["Frontend (OpenGINXplore)"]
+         N2["Backend (OpenGIN)"]
+         N3["BFF"]
+         N4["Databases"]
+     
+         N1 <-. API calls .-> N3
+         N3 <-. API calls .-> N2
+         N2 <-. DB Interaction .-> N4
+```
+### What the BFF calls
+The BFF communicates with the OpenGIN backend services REST APIs.
+It fetches raw domain data such as:
+- Entities (e.g. `Ministry`, `Departments`, `Persons`, `Documents`, `Dataset`
+- Time-Based Relationships between entities (e.g., `AS_PRIME_MINISTER`, `AS_MINISTER` )
+- Datasets with metadata
 
-- **Entity Management**: Create and manage government entities (departments, ministries, etc.)
-- **Attribute Processing**: Process and store entity attributes with metadata
-- **Organizational Charts**: Generate timeline-based organizational structures
-- **Data Visualization**: Transform data for chart generation
-- **Category Management**: Hierarchical category creation and relationships
-- **RESTful APIs**: Clean, documented API endpoints
+The BFF does not store data; it acts purely as a consumer of OpenGIN APIs.
 
-## 📋 Prerequisites
+### What it returns
+The BFF returns frontend-optimized JSON responses to the OpenGINXplore application.
+
+Instead of exposing raw OpenGIN structures, it provides:
+- Aggregated data from multiple OpenGIN endpoints
+- Flattened and simplified JSON structures
+- Only the fields required by the UI
+- Data formatted to match frontend components (cards, grids, timelines, etc.)
+
+This allows the frontend to consume ready-to-use data without additional processing.
+
+### Why this layer exists
+
+This BFF layer exists to:
+
+- Improve performance by reducing multiple frontend calls into a single optimized API call
+- Prevent over-fetching and under-fetching of data
+- Hide OpenGIN’s internal data model from the frontend
+- Centralize aggregation and transformation logic
+- Allow frontend changes without impacting the OpenGIN backend
+
+In short, it ensures the frontend gets exactly the data it needs, in the right format, with minimal latency.
+
+### Tech Stack
+
+- Language: Python
+- Framework: FastAPI
+- Communication: REST
+- Auth: None
+- Database: None (BFF layer only)
+- Containerization: Docker
+
+## API Documentation
+Find the API contracts:
+
+- **Organisation**: [contract](https://github.com/LDFLK/GI-SERVICE/blob/858cd41582ab9da9ad38afb5920e6e4b60a9a88a/gi_service/contract/rest/organisation_api_contract.yaml)
+- **Data**: [contract](https://github.com/LDFLK/GI-SERVICE/blob/858cd41582ab9da9ad38afb5920e6e4b60a9a88a/gi_service/contract/rest/data_api_contract.yaml)
+
+## API Endpoints
+
+### Organisation Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/v1/organisation/active-portfolio-list` | Get portfolio list |
+| `POST` | `/v1/organisation/departments-by-portfolio/{portfolio_id}` | Get departments under a given portfolio |
+| `POST` | `/v1/organisation/prime-minister` | Get prime minister for a given date
+
+## Installation & Setup
+
+### Prerequisite
 
 - Python 3.8 to 3.13
 - pip (Python package installer)
 - Git
-
-## 🛠️ Installation & Setup
 
 ### 1. Clone the Repository
 
@@ -32,11 +94,12 @@ cd GI-SERVICE
 
 ```bash
 # Create virtual environment
-python -m venv venv
+python -m venv .venv
 
 # Activate virtual environment
 # On Windows:
 venv\Scripts\activate
+
 # On macOS/Linux:
 source venv/bin/activate
 ```
@@ -51,171 +114,41 @@ pip install -r requirements.txt
 
 Create a `.env` file in the root directory:
 
-```env
-# Base URLs for CRUD and Query services
-BASE_URL_CRUD=http://0.0.0.0:8080
-BASE_URL_QUERY=http://0.0.0.0:8081
-
-# Optional: Add other environment variables as needed
-```
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `BASE_URL_QUERY` | OpenGIN service URL | `http://0.0.0.0:8081` |
 
 ### 5. Run the Application
 
-```bash
-# Development server
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+#### Using Terminal
 
-# Or using the Procfile (for production)
-uvicorn main:app --host 0.0.0.0 --port $PORT
+```bash
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+#### Using Docker
+```bash
+docker-compose up
 ```
 
 The API will be available at: `http://localhost:8000`
 
-## 📚 API Documentation
+## Testing the APIs
 
-Once the server is running, you can access:
-
-- **Interactive API Docs**: `http://localhost:8000/docs` (Swagger UI)
-- **Alternative Docs**: `http://localhost:8000/redoc` (ReDoc)
-
-## 🔌 API Endpoints
-
-### Entity Attributes
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/allAttributes` | Get all available attributes |
-| `POST` | `/data/entity/{entityId}` | Get attributes for a specific entity |
-| `POST` | `/data/attribute/{entityId}` | Get data for a specific attribute |
-
-### Data Writing
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/data/writeAttributes` | Process and write attributes to entities |
-
-### Organizational Charts
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/data/orgchart/timeline` | Get timeline for organizational chart |
-| `POST` | `/data/orgchart/ministries` | Get ministries for selected date |
-| `POST` | `/data/orgchart/departments` | Get departments for selected ministry |
-
-## 🧪 Testing the APIs
-
-### 1. Test Basic Connectivity
+### Test Basic Connectivity
 
 ```bash
-curl http://localhost:8000/docs
+http://localhost:8000/docs
 ```
 
-### 2. Test All Attributes Endpoint
-
-```bash
-curl -X GET "http://localhost:8000/allAttributes" \
-     -H "accept: application/json"
-```
-
-### 3. Test Entity Attributes
-
-```bash
-curl -X POST "http://localhost:8000/data/entity/your-entity-id" \
-     -H "Content-Type: application/json" \
-     -d '{
-       "entityId": "your-entity-id",
-       "filters": {}
-     }'
-```
-
-### 4. Test Data Writing
-
-```bash
-curl -X POST "http://localhost:8000/data/writeAttributes" \
-     -H "Content-Type: application/json" \
-     -d '{
-       "base_url": "/path/to/your/data"
-     }'
-```
-
-## 📁 Project Structure
-
-```
-GI-SERVICE/
-├── src/
-│   ├── dependencies/          # Dependency injection
-│   ├── models/               # Pydantic models
-│   ├── routers/              # API route handlers
-│   └── services/             # Business logic
-├── chartFactory/             # Chart generation utilities
-├── test/                     # Test data and scripts
-├── main.py                   # FastAPI application entry point
-├── requirements.txt          # Python dependencies
-├── Procfile                  # Deployment configuration
-└── README.md                # This file
-```
-
-## 🔧 Configuration
-
-### Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `BASE_URL_CRUD` | CRUD service base URL | `http://0.0.0.0:8080` |
-| `BASE_URL_QUERY` | Query service base URL | `http://0.0.0.0:8081` |
-
-### Data Processing
-
-The service processes data in the following format:
-
-```json
-{
-  "attributeName": "example_attribute",
-  "relatedEntityName": "Department Name",
-  "relation": "2022 - Government - Minister - Department",
-  "attributeData": {
-    "columns": ["col1", "col2"],
-    "rows": [["val1", "val2"]]
-  },
-  "attributeMetadata": {
-    "storage_type": "tabular",
-    "dataset_name": "Example Dataset"
-  }
-}
-```
-
-## 🚀 Deployment
-
-### Using Heroku
-
-1. Install Heroku CLI
-2. Login to Heroku: `heroku login`
-3. Create app: `heroku create your-app-name`
-4. Deploy: `git push heroku main`
-
-### Using Docker
-
-```dockerfile
-FROM python:3.9-slim
-
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-
-COPY . .
-EXPOSE 8000
-
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
-```
-
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
 1. **Port already in use**: Change the port in the uvicorn command
 2. **Environment variables not loaded**: Ensure `.env` file is in the root directory
 3. **Import errors**: Make sure virtual environment is activated
-4. **API not responding**: Check if the CRUD and Query services are running
+4. **API not responding**: Check if the OpenGIN services are running
 
 ### Debug Mode
 
@@ -224,7 +157,7 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 uvicorn main:app --reload --log-level debug
 ```
 
-## 🤝 Contributing
+## How to contribute?
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature-name`
@@ -232,16 +165,8 @@ uvicorn main:app --reload --log-level debug
 4. Push to branch: `git push origin feature-name`
 5. Submit a Pull Request
 
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 📞 Support
+## Support
 
 For support and questions:
 - Create an issue in the repository
 - Contact the development team
-
----
-
-**Happy Coding! 🎉**
