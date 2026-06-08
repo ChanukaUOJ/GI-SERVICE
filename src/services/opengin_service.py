@@ -159,9 +159,10 @@ class OpenGINService:
         
         url = f"{settings.BASE_URL_QUERY}/v1/entities/{category_id}/attributes/{dataset_name}"
         headers = {"Content-Type": "application/json"}
+        payload = {}
                 
         try:
-            async with self.session.get(url, headers=headers) as response:
+            async with self.session.post(url, json=payload, headers=headers) as response:
                 if response.status == 404:
                     raise NotFoundError(f"Read API Error: Attributes not found for category id {category_id} and dataset name {dataset_name}")
                 if response.status == 400:
