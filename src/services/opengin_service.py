@@ -142,7 +142,14 @@ class OpenGINService:
             raise InternalServerError("An unexpected error occurred") from e 
 
     @api_retry_decorator
-    async def get_attributes(self,category_id: str, dataset_name: str):
+    async def get_attributes(
+        self,
+        category_id: str,
+        dataset_name: str,
+        startTime: str | None = None,
+        endTime: str | None = None,
+        fields: list[str] | None = None,
+    ):
         if not category_id:
             raise BadRequestError("Category ID is required")
         
@@ -160,9 +167,16 @@ class OpenGINService:
         url = f"{settings.BASE_URL_QUERY}/v1/entities/{category_id}/attributes/{dataset_name}"
         headers = {"Content-Type": "application/json"}
         payload = {}
+        params: dict[str, str | list[str]] = {}
+        if startTime is not None:
+            params["startTime"] = startTime
+        if endTime is not None:
+            params["endTime"] = endTime
+        if fields is not None:
+            params["fields"] = fields
                 
         try:
-            async with self.session.post(url, json=payload, headers=headers) as response:
+            async with self.session.post(url, json=payload, headers=headers, params=params or None) as response:
                 if response.status == 404:
                     raise NotFoundError(f"Read API Error: Attributes not found for category id {category_id} and dataset name {dataset_name}")
                 if response.status == 400:
