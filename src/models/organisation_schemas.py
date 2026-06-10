@@ -44,3 +44,10 @@ class Dataset(BaseModel):
 class Date(BaseModel):
     date: str
 
+class AttributeFilterRecord(BaseModel):
+    field_name: str
+    operator: str = "eq"
+    value: str
+
+class AttributeFilterRecords(BaseModel):
+    records: list[AttributeFilterRecord]

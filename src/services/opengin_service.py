@@ -1,6 +1,7 @@
 from asyncio import timeout
 from google.api_core.exceptions import GoogleAPICallError
 from google.api_core.retry import if_transient_error
+from src.models.organisation_schemas import AttributeFilterRecords
 from src.models.organisation_schemas import Entity, Relation
 from src.exception.exceptions import BadRequestError
 from src.exception.exceptions import InternalServerError
@@ -149,6 +150,7 @@ class OpenGINService:
         startTime: str | None = None,
         endTime: str | None = None,
         fields: list[str] | None = None,
+        filters: AttributeFilterRecords | None = None,
     ):
         if not category_id:
             raise BadRequestError("Category ID is required")
@@ -166,7 +168,7 @@ class OpenGINService:
         
         url = f"{settings.BASE_URL_QUERY}/v1/entities/{category_id}/attributes/{dataset_name}"
         headers = {"Content-Type": "application/json"}
-        payload = {}
+        payload = filters.model_dump(mode="json") if filters else {}
         params: dict[str, str | list[str]] = {}
         if startTime is not None:
             params["startTime"] = startTime
