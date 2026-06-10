@@ -42,3 +42,14 @@ def test_attribute_filter_record_requires_field_name_and_value():
 
     with pytest.raises(ValidationError):
         AttributeFilterRecord(field_name="status")
+
+
+@pytest.mark.parametrize("operator", ["invalid", "equals", "EQ", "like"])
+def test_attribute_filter_record_rejects_invalid_operators(operator):
+    with pytest.raises(ValidationError) as exc_info:
+        AttributeFilterRecord(field_name="status", operator=operator, value="active")
+
+    errors = exc_info.value.errors()
+    assert len(errors) == 1
+    assert errors[0]["loc"] == ("operator",)
+    assert errors[0]["type"] == "literal_error"

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Literal
 from pydantic import BaseModel
 
 class Label(BaseModel):
@@ -46,7 +46,7 @@ class Date(BaseModel):
 
 class AttributeFilterRecord(BaseModel):
     field_name: str
-    operator: str = "eq"
+    operator: Literal["eq", "neq", "gt", "lt", "gte", "lte", "contains", "notcontains"] = "eq"
     value: str
 
 class AttributeFilterRecords(BaseModel):
