@@ -2,10 +2,9 @@ import asyncio
 import logging
 from typing import List, Dict, Any, Optional
 from src.enums import KindMajorEnum, KindMinorEnum
-from src.exception.exceptions import BadRequestError, InternalServerError
-from src.models.organisation_schemas import Entity, Kind
-from src.models.search_schemas import SearchResult, SearchResponse
-from src.utils.util_functions import Util
+from src.exception import BadRequestError, InternalServerError
+from src.models import Entity, Kind, SearchResponse, SearchResult
+from src.utils import Util
 
 logger = logging.getLogger(__name__)
 
@@ -221,5 +220,4 @@ class SearchService:
             logger.warning(f"Unknown entity type for major={major}, minor={minor}")
 
         return entity_type
-
 

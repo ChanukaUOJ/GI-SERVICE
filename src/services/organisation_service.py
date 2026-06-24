@@ -1,16 +1,11 @@
-from src.enums.relationEnum import RelationDirectionEnum
-from src.enums.relationEnum import RelationNameEnum
-from src.exception.exceptions import BadRequestError
-from src.exception.exceptions import NotFoundError
-from src.exception.exceptions import InternalServerError
 import asyncio
-from src.utils.util_functions import Util
 from aiohttp import ClientSession
-from src.utils import http_client
-from src.models.organisation_schemas import Entity, Relation
-from src.enums.idEnum import EntityIdEnum
-from typing import Optional, Sequence
 import logging
+from typing import Optional, Sequence
+from src.enums import EntityIdEnum, RelationDirectionEnum, RelationNameEnum
+from src.exception import BadRequestError, InternalServerError, NotFoundError
+from src.models import Entity, Relation
+from src.utils import Util, http_client
 
 logger = logging.getLogger(__name__)
 
@@ -800,4 +795,3 @@ class OrganisationService:
         except Exception as e:
             logger.error(f"Error in enrich_department_timeline: {e}")
             raise InternalServerError("An unexpected error occurred") from e
-

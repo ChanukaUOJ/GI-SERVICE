@@ -2,14 +2,10 @@ import logging
 import asyncio
 from typing import Dict
 from src.enums import KindMajorEnum, KindMinorEnum, RelationNameEnum, RelationDirectionEnum
-from src.exception.exceptions import InternalServerError, NotFoundError
-from src.exception.exceptions import BadRequestError
-from src.models.organisation_schemas import Relation
-from src.utils.util_functions import Util
-from src.models.organisation_schemas import Kind
-from src.models.organisation_schemas import Entity
+from src.exception import BadRequestError, InternalServerError, NotFoundError
+from src.models import Entity, Kind, Relation
 from aiohttp import ClientSession
-from src.utils import http_client
+from src.utils import Util, http_client
 
 logger = logging.getLogger(__name__)
 
