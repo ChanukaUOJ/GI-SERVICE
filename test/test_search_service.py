@@ -1,11 +1,9 @@
 import pytest
 from unittest.mock import patch, AsyncMock
-from src.exception.exceptions import BadRequestError
-from src.models.organisation_schemas import Entity, Kind
-from src.models.search_schemas import SearchResponse
-from src.services.search_service import SearchService
-from src.services.opengin_service import OpenGINService
 from src.enums import KindMajorEnum, KindMinorEnum
+from src.exception import BadRequestError
+from src.models import Entity, Kind, SearchResponse
+from src.services import OpenGINService, SearchService
 
 
 # Fixtures

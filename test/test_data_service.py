@@ -1,9 +1,9 @@
 import pytest
 import asyncio
-from src.exception.exceptions import InternalServerError, BadRequestError, NotFoundError
 from unittest.mock import patch
-from src.models.organisation_schemas import Entity, Relation, Kind
 from src.enums import KindMajorEnum, KindMinorEnum, RelationNameEnum, RelationDirectionEnum
+from src.exception import BadRequestError, InternalServerError, NotFoundError
+from src.models import Entity, Kind, Relation
 
 # Tests for enrich_dataset
 @pytest.mark.asyncio

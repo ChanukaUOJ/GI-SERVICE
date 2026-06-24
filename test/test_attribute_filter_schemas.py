@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from src.models.organisation_schemas import AttributeFilterRecord, AttributeFilterRecords
+from src.models import AttributeFilterRecord, AttributeFilterRecords
 
 
 def test_attribute_filter_record_defaults_operator_to_eq():

@@ -1,14 +1,13 @@
 
 import pytest
-from src.enums.relationEnum import RelationDirectionEnum
-from src.enums.relationEnum import RelationNameEnum
-from src.models.organisation_schemas import Kind
-from src.exception.exceptions import NotFoundError, BadRequestError
-from src.models.organisation_schemas import (
+from src.enums import RelationDirectionEnum, RelationNameEnum
+from src.exception import BadRequestError, NotFoundError
+from src.models import (
     AttributeFilterRecord,
     AttributeFilterRecords,
     Entity,
     Relation,
+    Kind,
 )
 from test.conftest import MockResponse
 
@@ -373,5 +372,4 @@ async def test_get_attributes_bad_request(mock_service, mock_session):
 
     with pytest.raises(BadRequestError, match="Bad request"):
         await mock_service.get_attributes("category_123", "dataset_abc")
-
 

@@ -1,10 +1,9 @@
 import pytest
-from src.enums.relationEnum import RelationNameEnum, RelationDirectionEnum
-from src.exception.exceptions import InternalServerError, BadRequestError
-from src.utils.util_functions import Util
 from unittest.mock import AsyncMock, patch, MagicMock
-from src.models.organisation_schemas import Entity, Relation
-from src.enums.idEnum import EntityIdEnum
+from src.enums import EntityIdEnum, RelationDirectionEnum, RelationNameEnum
+from src.exception import BadRequestError, InternalServerError
+from src.models import Entity, Relation
+from src.utils import Util
 
 
 @pytest.mark.asyncio
@@ -20,7 +19,7 @@ async def test_enrich_person_data_as_president(
     ]
 
     with patch(
-        "services.organisation_service.Util.decode_protobuf_attribute_name",
+        "src.services.organisation_service.Util.decode_protobuf_attribute_name",
         return_value="John Doe",
     ):
         result = await organisation_service.enrich_person_data(
@@ -58,7 +57,7 @@ async def test_enrich_person_data_as_not_president(
     ]
 
     with patch(
-        "services.organisation_service.Util.decode_protobuf_attribute_name",
+        "src.services.organisation_service.Util.decode_protobuf_attribute_name",
         return_value="John Doe",
     ):
         result = await organisation_service.enrich_person_data(
@@ -104,7 +103,7 @@ async def test_enrich_department_item(organisation_service, mock_opengin_service
     ]
 
     with patch(
-        "services.organisation_service.Util.decode_protobuf_attribute_name",
+        "src.services.organisation_service.Util.decode_protobuf_attribute_name",
         return_value="Department_of_security",
     ):
         result = await organisation_service.enrich_department_item(
@@ -141,7 +140,7 @@ async def test_enrich_department_item_with_no_data(
     mock_opengin_service.fetch_relation.return_value = []
 
     with patch(
-        "services.organisation_service.Util.decode_protobuf_attribute_name",
+        "src.services.organisation_service.Util.decode_protobuf_attribute_name",
         return_value="Department_of_security",
     ):
         result = await organisation_service.enrich_department_item(
@@ -178,7 +177,7 @@ async def test_enrich_department_item_not_new(
     mock_opengin_service.fetch_relation.return_value = []
 
     with patch(
-        "services.organisation_service.Util.decode_protobuf_attribute_name",
+        "src.services.organisation_service.Util.decode_protobuf_attribute_name",
         return_value="Department_of_security",
     ):
         result = await organisation_service.enrich_department_item(
@@ -217,7 +216,7 @@ async def test_departments_by_portfolio_id_success(
 
     # Patch enrich_department_item with AsyncMock returning the department dict
     with patch(
-        "services.organisation_service.OrganisationService.enrich_department_item",
+        "src.services.organisation_service.OrganisationService.enrich_department_item",
         new_callable=AsyncMock,
     ) as mock_enrich_department:
         mock_enrich_department.return_value = {
@@ -322,7 +321,7 @@ async def test_prime_minister_success(organisation_service, mock_opengin_service
 
     # Patch enrich_department_item with AsyncMock returning the department dict
     with patch(
-        "services.organisation_service.OrganisationService.enrich_person_data",
+        "src.services.organisation_service.OrganisationService.enrich_person_data",
         new_callable=AsyncMock,
     ) as mock_enrich_person:
         mock_enrich_person.return_value = {
@@ -375,7 +374,7 @@ async def test_prime_minister_without_person_data(
 
     # Patch enrich_department_item with AsyncMock returning the department dict
     with patch(
-        "services.organisation_service.OrganisationService.enrich_person_data",
+        "src.services.organisation_service.OrganisationService.enrich_person_data",
         new_callable=AsyncMock,
     ) as mock_enrich_person:
         mock_enrich_person.return_value = {}

@@ -1,15 +1,9 @@
-
-from src.services.data_service import DataService
 import pytest
 from aiohttp import ClientError
 from unittest.mock import patch, PropertyMock, MagicMock
-from services.opengin_service import OpenGINService
-from src.utils.http_client import HTTPClient
-from services.organisation_service import OrganisationService
 from unittest.mock import AsyncMock
-from src.utils.util_functions import Util
-from src.services.person_service import PersonService
-from src.services.document_service import DocumentService
+from src.services import DataService, DocumentService, OpenGINService, OrganisationService, PersonService
+from src.utils import HTTPClient, Util
 
 # MockResponse class to simulate aiohttp responses
 class MockResponse:

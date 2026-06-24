@@ -1,8 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from src.services.document_service import DocumentService
-from src.exception.exceptions import InternalServerError, NotFoundError
-from src.models.organisation_schemas import Entity
+from src.exception import InternalServerError, NotFoundError
 
 @pytest.mark.asyncio
 async def test_get_gazette_data_points_success(document_service, mock_opengin_service):
@@ -141,5 +139,4 @@ async def test_get_gazette_data_points_robustness(document_service, mock_opengin
     
     assert result["data"][1]["year"] == 2024
     assert result["data"][1]["values"][4] == 1 # May
-
 
