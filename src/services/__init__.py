@@ -8,8 +8,8 @@ from .search_service import SearchService
 __all__ = [
     "DataService",
     "DocumentService",
-    "OrganisationService",
     "OpenGINService",
+    "OrganisationService",
     "PersonService",
     "SearchService",
 ]
