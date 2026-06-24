@@ -10,7 +10,7 @@ from .organisation_schemas import (
     Label,
     Relation,
 )
-from .person_schemas import PersonSource, PersonResponse
+from .person_schemas import PersonResponse, PersonSource
 from .search_schemas import SearchResponse, SearchResult
 
 __all__ = [
