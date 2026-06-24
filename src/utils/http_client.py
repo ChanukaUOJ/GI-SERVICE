@@ -1,6 +1,6 @@
 from aiohttp import ClientSession, ClientTimeout, TCPConnector
 from typing import Optional
-from src.core.config import settings
+from src.core import settings
 class HTTPClient:
     "Single HTTP client for the application"
 
