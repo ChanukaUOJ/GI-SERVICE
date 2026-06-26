@@ -802,6 +802,15 @@ async def test_department_moves_between_ministers(organisation_service):
     total_flow = sum(link["value"] for link in result["links"])
     assert total_flow == 4
 
+    all_department_ids = {
+        department_id
+        for link in result["links"]
+        for department_id in link["departmentIds"]
+    }
+    assert all_department_ids == {"dep175", "dep176", "dep177", "dep182"}
+    for link in result["links"]:
+        assert link["value"] == len(link["departmentIds"])
+
     # nodes should exist
     assert len(result["nodes"]) > 0
 
@@ -966,6 +975,7 @@ async def test_multiple_departments_aggregation(organisation_service):
     # The value should be 2 because two departments moved along this path
     link = result["links"][0]
     assert link["value"] == 2
+    assert set(link["departmentIds"]) == {"dep1", "dep2"}
 
     # Nodes should exist for both ministers
     node_ids = {node["id"] for node in result["nodes"]}
