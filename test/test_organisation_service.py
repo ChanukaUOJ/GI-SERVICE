@@ -703,6 +703,52 @@ async def test_fetch_and_map_entities_partial_failure(
 
 
 @pytest.mark.asyncio
+async def test_resolve_entity_names_success(organisation_service, mock_opengin_service):
+    entity_ids = ["e1", "e2", "e1"]
+    mock_opengin_service.get_entities.side_effect = [
+        [Entity(id="e1", name="encoded_name_1")],
+        [Entity(id="e2", name="encoded_name_2")],
+    ]
+
+    with patch(
+        "services.organisation_service.Util.decode_protobuf_attribute_name",
+        side_effect=lambda name: f"decoded_{name}",
+    ):
+        result = await organisation_service.resolve_entity_names(entity_ids)
+
+    assert result == {
+        "e1": "decoded_encoded_name_1",
+        "e2": "decoded_encoded_name_2",
+    }
+    assert mock_opengin_service.get_entities.call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_resolve_entity_names_partial_failure(
+    organisation_service, mock_opengin_service
+):
+    entity_ids = ["e1", "e2"]
+    mock_opengin_service.get_entities.side_effect = [
+        [Entity(id="e1", name="encoded_name_1")],
+        Exception("Failed to fetch"),
+    ]
+
+    with patch(
+        "services.organisation_service.Util.decode_protobuf_attribute_name",
+        side_effect=lambda name: f"decoded_{name}",
+    ):
+        result = await organisation_service.resolve_entity_names(entity_ids)
+
+    assert result == {"e1": "decoded_encoded_name_1"}
+
+
+@pytest.mark.asyncio
+async def test_resolve_entity_names_empty_list(organisation_service):
+    result = await organisation_service.resolve_entity_names([])
+    assert result == {}
+
+
+@pytest.mark.asyncio
 async def test_fetch_and_map_relations_success(
     organisation_service, mock_opengin_service
 ):
@@ -802,6 +848,15 @@ async def test_department_moves_between_ministers(organisation_service):
     # total movements should equal 4
     total_flow = sum(link["value"] for link in result["links"])
     assert total_flow == 4
+
+    all_department_ids = {
+        department_id
+        for link in result["links"]
+        for department_id in link["departmentIds"]
+    }
+    assert all_department_ids == {"dep175", "dep176", "dep177", "dep182"}
+    for link in result["links"]:
+        assert link["value"] == len(link["departmentIds"])
 
     # nodes should exist
     assert len(result["nodes"]) > 0
@@ -967,6 +1022,7 @@ async def test_multiple_departments_aggregation(organisation_service):
     # The value should be 2 because two departments moved along this path
     link = result["links"][0]
     assert link["value"] == 2
+    assert set(link["departmentIds"]) == {"dep1", "dep2"}
 
     # Nodes should exist for both ministers
     node_ids = {node["id"] for node in result["nodes"]}

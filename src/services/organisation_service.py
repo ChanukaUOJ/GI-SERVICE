@@ -489,7 +489,12 @@ class OrganisationService:
                 {"id": "<minister_id>", "time": "<date>", "name": "<minister_name>"}
             ],
             "links": [
-                {"source": <node_index>, "target": <node_index>, "value": <count>}
+                {
+                    "source": <node_index>,
+                    "target": <node_index>,
+                    "value": <count>,
+                    "departmentIds": ["<department_id>", ...]
+                }
             ],
             "dates": [
                 {"date": "<date>", "status": "<status>", "departmentsCount": <count>}
@@ -515,7 +520,7 @@ class OrganisationService:
             expected_slots = len(dates) # number of dates requested, used to initialise fixed-size timeline slots per department
             nodes: list[dict[str, str]] = [] # list of graph nodes, each representing a minister at a specific date e.g. {"id": "minister_001", "time": "2015-01-01"}
             node_indices: dict[tuple[str, int], int] = {} # maps (minister_id, date_index) -> index in `nodes`, avoids duplicate nodes for the same minister at the same date
-            links_counter: dict[tuple[int, int], int] = {} # maps (source_node_index, target_node_index) -> count of departments that moved between those two ministers across consecutive dates
+            links_departments: dict[tuple[int, int], list[str]] = {} # maps (source_node_index, target_node_index) -> department ids that moved between those two ministers across consecutive dates
             date_status: list[dict[str, object]] = [
                 {"date": d, "status": "pending"} for d in dates
             ] # tracks processing status per date ("pending" -> "ok" / "error" / "no_data") for the response metadata
@@ -587,14 +592,19 @@ class OrganisationService:
                     previous_index = timeline[date_index - 1] if date_index > 0 else None
                     timeline[date_index] = node_index
 
-                    # Aggregate movements: each department that goes from previous_index -> node_index adds +1 to that link.
+                    # Aggregate movements: each department that goes from previous_index -> node_index is added to that link.
                     if previous_index is not None and node_index is not None:
                         key = (previous_index, node_index)
-                        links_counter[key] = links_counter.get(key, 0) + 1 # increment the number of departments moved from m1->m2
+                        links_departments.setdefault(key, []).append(department_id)
                     
             links = [
-                {"source": source, "target": target, "value": value}
-                for (source, target), value in links_counter.items()
+                {
+                    "source": source,
+                    "target": target,
+                    "value": len(department_ids),
+                    "departmentIds": department_ids,
+                }
+                for (source, target), department_ids in links_departments.items()
             ]
             
             unique_ids = list({node['id'] for node in nodes})
@@ -652,6 +662,20 @@ class OrganisationService:
             if not isinstance(result, Exception) and result:
                 entity_map[result[0].id] = result[0]
         return entity_map
+
+    async def resolve_entity_names(self, entity_ids: Sequence[str]) -> dict[str, str]:
+        """Resolve entity IDs to decoded display names."""
+        if not entity_ids:
+            return {}
+
+        unique_ids = list(dict.fromkeys(entity_ids))
+        entity_map = await self._fetch_and_map_entities(unique_ids)
+
+        return {
+            entity_id: Util.decode_protobuf_attribute_name(entity.name)
+            for entity_id, entity in entity_map.items()
+            if entity.name
+        }
 
     # helper : fetch relations for multiple entities in parallel and map them by id
     async def _fetch_and_map_relations(self, entity_ids: list[str], relation_query: Relation) -> dict[str, list[Relation]]:
