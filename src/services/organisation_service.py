@@ -595,9 +595,7 @@ class OrganisationService:
                     # Aggregate movements: each department that goes from previous_index -> node_index is added to that link.
                     if previous_index is not None and node_index is not None:
                         key = (previous_index, node_index)
-                        if key not in links_departments:
-                            links_departments[key] = []
-                        links_departments[key].append(department_id)
+                        links_departments.setdefault(key, []).append(department_id)
                     
             links = [
                 {
