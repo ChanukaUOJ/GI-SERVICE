@@ -44,6 +44,17 @@ async def cabinet_flow(
     service_response = await service.fetch_cabinet_flow(president_id=president_id, dates=dates)
     return service_response 
 
+@router.post("/entity-names", summary="Resolve entity IDs to display names.", description="Returns a dictionary mapping each entity ID to its decoded display name.")
+async def entity_names(
+    entity_ids: list[str] = Body(
+        ...,
+        description="List of entity IDs to resolve.",
+        example=["2153-12_dep_168", "2153-12_dep_171"],
+    ),
+    service: OrganisationService = Depends(get_organisation_service),
+):
+    return await service.resolve_entity_names(entity_ids)
+
 @router.get('/department-history/{department_id}', summary="Get department history timeline.", description="Returns a timeline of a department including ministry relations and ministers.")
 async def department_history_timeline(
     department_id: str = Path(..., description="ID of the department"),

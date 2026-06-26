@@ -702,6 +702,52 @@ async def test_fetch_and_map_entities_partial_failure(
 
 
 @pytest.mark.asyncio
+async def test_resolve_entity_names_success(organisation_service, mock_opengin_service):
+    entity_ids = ["e1", "e2", "e1"]
+    mock_opengin_service.get_entities.side_effect = [
+        [Entity(id="e1", name="encoded_name_1")],
+        [Entity(id="e2", name="encoded_name_2")],
+    ]
+
+    with patch(
+        "services.organisation_service.Util.decode_protobuf_attribute_name",
+        side_effect=lambda name: f"decoded_{name}",
+    ):
+        result = await organisation_service.resolve_entity_names(entity_ids)
+
+    assert result == {
+        "e1": "decoded_encoded_name_1",
+        "e2": "decoded_encoded_name_2",
+    }
+    assert mock_opengin_service.get_entities.call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_resolve_entity_names_partial_failure(
+    organisation_service, mock_opengin_service
+):
+    entity_ids = ["e1", "e2"]
+    mock_opengin_service.get_entities.side_effect = [
+        [Entity(id="e1", name="encoded_name_1")],
+        Exception("Failed to fetch"),
+    ]
+
+    with patch(
+        "services.organisation_service.Util.decode_protobuf_attribute_name",
+        side_effect=lambda name: f"decoded_{name}",
+    ):
+        result = await organisation_service.resolve_entity_names(entity_ids)
+
+    assert result == {"e1": "decoded_encoded_name_1"}
+
+
+@pytest.mark.asyncio
+async def test_resolve_entity_names_empty_list(organisation_service):
+    result = await organisation_service.resolve_entity_names([])
+    assert result == {}
+
+
+@pytest.mark.asyncio
 async def test_fetch_and_map_relations_success(
     organisation_service, mock_opengin_service
 ):
