@@ -411,6 +411,43 @@ paths:
         "500":
           description: Server Error
 
+  /v1/organisation/entity-names:
+    post:
+      tags:
+        - Organization
+      summary: Resolve entity IDs to display names.
+      description: Returns a dictionary mapping each entity ID to its decoded display name. IDs that cannot be resolved are omitted from the response.
+      operationId: resolveEntityNames
+      requestBody:
+        required: true
+        description: List of entity IDs to resolve.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+            example:
+              - "2289-43_min_1"
+              - "2289-43_dep_1"
+      responses:
+        "200":
+          description: Successfully returned
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+                description: Map of entity ID to display name.
+              example:
+                "2289-43_min_1": "Minister of Defence"
+                "2289-43_dep_1": "Ministry of Health"
+        "400":
+          description: Bad request
+        "500":
+          description: Server Error
+
   /v1/organisation/department-history/{department_id}:
     get:
       tags:

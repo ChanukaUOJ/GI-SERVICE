@@ -665,6 +665,20 @@ class OrganisationService:
                 entity_map[result[0].id] = result[0]
         return entity_map
 
+    async def resolve_entity_names(self, entity_ids: Sequence[str]) -> dict[str, str]:
+        """Resolve entity IDs to decoded display names."""
+        if not entity_ids:
+            return {}
+
+        unique_ids = list(dict.fromkeys(entity_ids))
+        entity_map = await self._fetch_and_map_entities(unique_ids)
+
+        return {
+            entity_id: Util.decode_protobuf_attribute_name(entity.name)
+            for entity_id, entity in entity_map.items()
+            if entity.name
+        }
+
     # helper : fetch relations for multiple entities in parallel and map them by id
     async def _fetch_and_map_relations(self, entity_ids: list[str], relation_query: Relation) -> dict[str, list[Relation]]:
         """Fetch relations for multiple entities in parallel and map them."""
