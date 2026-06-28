@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Query, Body, Path
-from src.models.organisation_schemas import Date
+from src.models import Date
 from src.services import OpenGINService, OrganisationService
 from typing import Sequence
 

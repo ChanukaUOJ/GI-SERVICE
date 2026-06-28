@@ -1,9 +1,8 @@
 import pytest
-from src.enums.relationEnum import RelationNameEnum, RelationDirectionEnum
-from src.models.organisation_schemas import Relation
+from src.enums import RelationDirectionEnum, RelationNameEnum
 from test.conftest import MockResponse
-from src.models.organisation_schemas import Entity
-from src.exception.exceptions import BadRequestError
+from src.exception import BadRequestError
+from src.models import Entity, Relation
 from google.api_core.exceptions import InternalServerError
 from unittest.mock import AsyncMock, patch
 from google.api_core.exceptions import RetryError
@@ -205,4 +204,3 @@ async def test_get_metadata_succeeds_after_retries(mock_service, mock_session):
             assert mock_session.get.call_count == 3
             assert mock_sleep.call_count == 2
             
-

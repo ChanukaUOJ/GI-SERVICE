@@ -1,10 +1,8 @@
-from src.models.data_requestbody import DatasetYearsRequest
-from src.models.data_requestbody import DataCatalogRequest
 from fastapi.param_functions import Depends, Query, Body, Path
-from src.services.data_service import DataService
-from src.services.opengin_service import OpenGINService
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
+from src.models import DataCatalogRequest, DatasetYearsRequest
+from src.services import DataService, OpenGINService
 
 router = APIRouter(prefix="/v1/data", tags=["Data"])
 

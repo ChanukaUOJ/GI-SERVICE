@@ -1,9 +1,8 @@
 from fastapi import APIRouter, Depends, Query
 from typing import Optional, List
 from datetime import datetime
-from src.services.search_service import SearchService
-from src.services.opengin_service import OpenGINService
-from src.models.search_schemas import SearchResponse
+from src.models import SearchResponse
+from src.services import OpenGINService, SearchService
 
 router = APIRouter(prefix="/v1/search", tags=["Search"])
 

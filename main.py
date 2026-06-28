@@ -6,10 +6,10 @@ from src.routers import (
     person_router,
     document_router,
 )
-from src.core.config import settings
+from src.core import settings
 from fastapi.middleware.cors import CORSMiddleware
-from src.middleware.throttling import ThrottlingMiddleware
-from src.utils.http_client import http_client
+from src.middleware import ThrottlingMiddleware
+from src.utils import http_client
 from contextlib import asynccontextmanager
 
 @asynccontextmanager

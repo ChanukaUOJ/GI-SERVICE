@@ -1,10 +1,9 @@
 import pytest
 from unittest.mock import AsyncMock, patch
-from src.models.organisation_schemas import Entity, Relation
-from src.models.person_schemas import PersonResponse
-from src.exception.exceptions import BadRequestError, InternalServerError, NotFoundError
 from datetime import date
+from src.exception import BadRequestError, InternalServerError, NotFoundError
 from src.enums import KindMinorEnum
+from src.models import Entity, PersonResponse, Relation
 
 # --- Tests for is_president_during ---
 
@@ -698,5 +697,4 @@ async def test_fetch_all_presidents_internal_error(person_service, mock_opengin_
     
     with pytest.raises(InternalServerError):
         await person_service.fetch_all_presidents()
-
 
